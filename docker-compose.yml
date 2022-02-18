@@ -1,0 +1,56 @@
+version: '3.4'
+
+networks:
+  alembicmysql:
+    external: false
+
+services:
+  db:
+    image: mysql
+    container_name: alembicmysql_db
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      alembicmysql:
+        aliases:
+          - db
+    env_file:
+      - .env
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=true
+  migrations:
+    build: ./migrations
+    container_name: alembicmysql_migrations
+    networks:
+      - alembicmysql
+    env_file:
+      - .env
+    depends_on:
+      - db
+  adminer:
+    image: adminer
+    container_name: alembicmysql_adminer
+    restart: always
+    networks:
+      - alembicmysql
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+  jupyter:
+    image: jupyter/minimal-notebook
+    container_name: alembicmysql_jupyter
+    restart: always
+    networks:
+      - alembicmysql
+    env_file:
+      - .env
+    ports:
+      - 8888:8888
+    volumes:
+      - ./config/jupyter_notebook_config.py:/home/jovyan/.jupyter/jupyter_notebook_config.py
+      - ./data:/home/jovyan/data:ro
+      - ./notebooks:/home/jovyan/notebooks
+    depends_on:
+      - db
+      - migrations
