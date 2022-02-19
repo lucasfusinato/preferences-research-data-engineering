@@ -18,6 +18,11 @@ services:
       - .env
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD=true
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "127.0.0.1", "-u", $$MYSQL_USER, --password=$$MYSQL_PASSWORD]
+      timeout: 10s
+      retries: 5
+      start_period: 10s
   migrations:
     build: ./jobs/migrations
     container_name: alembicmysql_migrations_job
@@ -26,7 +31,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   etl:
     build: ./jobs/etl
     container_name: alembicmysql_etl_job
@@ -37,7 +43,10 @@ services:
     volumes:
       - ./jobs/etl/outputs:/etl/outputs
     depends_on:
-      - migrations
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_started
   jupyter:
     build: ./jupyter
     container_name: alembicmysql_jupyter
