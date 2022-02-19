@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 
+from sqlalchemy import create_engine
 from alembic import context
 
 import os
@@ -74,7 +75,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    connectable = get_engine_url_from_env()
+    connectable = create_engine(get_engine_url_from_env())
 
     with connectable.connect() as connection:
         context.configure(
